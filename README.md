@@ -1,170 +1,275 @@
-# DataBridge MCP - Data Tools Server
+# DataBridge MCP - Data Processing Tools Server
 
-A local Model Context Protocol (MCP) server that provides data file reading capabilities through natural language interfaces. This server enables seamless interaction with CSV and Parquet files via Claude for Desktop.
+A beginner-friendly Model Context Protocol (MCP) server that demonstrates how to create custom tools for AI assistants like Claude. This server provides tools to read and summarize CSV and Parquet files, serving as a foundation for building more advanced AI-powered workflows.
 
-## Overview
+## What is MCP?
 
-DataBridge MCP is designed as a modular MCP server that exposes data file reading tools to AI assistants like Claude. It provides a clean, extensible architecture for adding new data processing capabilities over time.
+The Model Context Protocol (MCP) allows AI assistants to securely interact with external data and custom tools. Think of it as building your own mini API that exposes useful functions to an AI assistant running on your machine.
 
 ## Features
 
-### Current Tools
-- **CSV Reader**: Read and analyze CSV files with automatic data type inference
-- **Parquet Reader**: Read and process Parquet files with schema inspection
-- **Data Preview**: Quick data sampling and structure overview
-- **Error Handling**: Robust file validation and error reporting
-
-### Planned Features
-- JSON file reader
-- Excel file reader  
-- Data transformation tools
-- Statistical analysis tools
-- Data visualization utilities
+- **Two file reading tools**: CSV and Parquet file summarization
+- **Clean, modular architecture**: Easy to extend with additional tools
+- **Local execution**: Runs entirely on your machine
+- **Claude Desktop integration**: Works seamlessly with Claude for Desktop
+- **Type-safe**: Built with proper Python typing
+- **Multiple run options**: Direct Python execution or uv-based workflow
 
 ## Project Structure
 
 ```
-databridge-mcp/
-├── main.py              # MCP server entry point
-├── pyproject.toml        # Project dependencies and configuration
-├── README.md            # This file
-├── data/                # Sample data files for testing
-├── tools/               # MCP tool implementations
-│   ├── __init__.py      # Tools package initialization
-│   ├── csv_reader.py    # CSV file reading tool
-│   └── parquet_reader.py # Parquet file reading tool
-└── utils/               # Shared utilities and helpers
-    ├── __init__.py      # Utils package initialization
-    ├── file_validators.py # File validation utilities
-    └── data_helpers.py   # Common data processing functions
+databridge_mcp/
+│
+├── data/                    # Sample data files
+│   ├── sample.csv
+│   └── sample.parquet
+│
+├── tools/                   # MCP tool definitions
+│   ├── csv_tools.py
+│   └── parquet_tools.py
+│
+├── utils/                   # Reusable utilities
+│   └── file_reader.py
+│
+├── server.py               # MCP server instance
+├── main.py                 # Entry point
+├── generate_parquet.py     # Sample data generator
+├── run_server.py          # Alternative Python runner
+├── run_server.sh          # Shell script runner with full uv path
+├── pyproject.toml         # Dependencies
+└── uv.lock               # Locked dependencies
 ```
 
-## Dependencies
+## Prerequisites
 
-- **mcp[cli]** (>=1.12.2): Model Context Protocol implementation
-- **pandas** (>=2.3.1): Data manipulation and analysis
-- **pyarrow** (>=21.0.0): Parquet file support and columnar data processing
+- Python 3.13 or higher
+- [uv](https://github.com/astral-sh/uv) package manager (recommended)
+- [Claude for Desktop](https://www.anthropic.com/claude) (for testing)
 
-## Setup and Installation
+## Setup Instructions
 
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/samrasugu/databridge-mcp.git
-   cd databridge-mcp
-   ```
+### 1. Install uv (Recommended)
 
-2. **Install dependencies**:
-   ```bash
-   uv sync
-   ```
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
 
-3. **Activate the virtual environment**:
-   ```bash
-   source .venv/bin/activate
-   ```
+Restart your terminal after installation.
+
+### 2. Clone and Setup Project
+
+```bash
+# Clone the repository
+git clone https://github.com/samrasugu/databridge_mcp.git
+cd databridge_mcp
+
+# Install dependencies
+uv sync
+
+# Activate virtual environment
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+```
+
+### 3. Verify Sample Data
+
+The project includes sample data files:
+- `data/sample.csv` - Sample CSV data
+- `data/sample.parquet` - Sample Parquet data
+
+You can regenerate the Parquet file if needed:
+```bash
+uv run generate_parquet.py
+```
+
+## Running the Server
+
+### Option 1: Using uv (Recommended)
+
+```bash
+uv run main.py
+```
+
+### Option 2: Direct Python Execution
+
+```bash
+python run_server.py
+```
+
+### Option 3: Shell Script (with full uv path)
+
+```bash
+./run_server.sh
+```
+
+The server will start and wait for connections from MCP clients.
+
+## Configure Claude for Desktop
+
+### Method 1: Using uv (may have PATH issues)
+
+1. **Install Claude for Desktop** from [https://www.anthropic.com/claude](https://www.anthropic.com/claude)
+
+2. **Edit the configuration file**:
+   - **macOS/Linux**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+   - **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+
+3. **Add your server configuration**:
+
+```json
+{
+  "mcpServers": {
+    "databridge_mcp": {
+      "command": "uv", //or path to uv: "/Users/YOUR_USERNAME/.local/bin/uv"
+      "args": [
+        "--directory",
+        "/ABSOLUTE/PATH/TO/databridge_mcp",
+        "run",
+        "main.py"
+      ]
+    }
+  }
+}
+```
+
+### Method 2: Using Full uv Path (Recommended)
+
+If you encounter "spawn uv ENOENT" errors, use the full path to uv:
+
+```json
+{
+  "mcpServers": {
+    "databridge_mcp": {
+      "command": "/Users/YOUR_USERNAME/.local/bin/uv",
+      "args": [
+        "--directory",
+        "/ABSOLUTE/PATH/TO/databridge_mcp",
+        "run",
+        "main.py"
+      ]
+    }
+  }
+}
+```
+
+### Method 3: Direct Python Execution
+
+```json
+{
+  "mcpServers": {
+    "databridge_mcp": {
+      "command": "python3",
+      "args": [
+        "/ABSOLUTE/PATH/TO/databridge_mcp/run_server.py"
+      ]
+    }
+  }
+}
+```
+
+**Important**: Replace `/ABSOLUTE/PATH/TO/databridge_mcp` with the actual full path to your project folder.
+
+4. **Restart Claude for Desktop**
 
 ## Usage
 
-### Running the MCP Server
+Once configured, you can interact with your tools through Claude:
 
-Start the server locally:
-```bash
-python main.py
+```
+"Summarize the CSV file named sample.csv"
+"How many rows are in sample.parquet?"
+"What's the structure of the data in sample.csv?"
+"Read the first few rows of the sample data"
 ```
 
-The server will start and listen for MCP protocol connections from compatible clients.
+Claude will automatically detect and use the appropriate tools to answer your questions.
 
-### Connecting to Claude for Desktop
+## Available Tools
 
-1. **Configure Claude for Desktop** to connect to your local MCP server
-2. **Add server configuration** in Claude's settings:
-   ```json
-   {
-     "name": "databridge_mcp",
-     "command": "python",
-     "args": ["/path/to/databridge-mcp/main.py"],
-     "env": {}
-   }
-   ```
-
-3. **Restart Claude for Desktop** to load the new server configuration
-
-### Available Tools
-
-Once connected, you can interact with your data files through natural language:
-
-#### CSV File Reading
-- "Read the CSV file at /path/to/data.csv"
-- "Show me the first 10 rows of the sales data"
-- "What are the column names and data types in this CSV?"
-
-#### Parquet File Reading  
-- "Load the Parquet file and show its schema"
-- "Read the analytics data and give me a summary"
-- "What's the size and structure of this Parquet file?"
-
-## Development
-
-### Adding New Tools
-
-1. **Create a new tool file** in the `tools/` directory
-2. **Implement the MCP tool interface** with proper error handling
-3. **Add utility functions** to the `utils/` directory if needed
-4. **Register the tool** in the main server configuration
-5. **Update this README** with the new tool documentation
-
-### Tool Development Guidelines
-
-- Follow the MCP protocol specifications
-- Include comprehensive error handling
-- Provide clear, descriptive tool names and descriptions
-- Add input validation for file paths and parameters
-- Include helpful error messages for common issues
-
-## Testing
-
-### Sample Data
-Place test data files in the `data/` directory:
-- `sample.csv` - Example CSV file for testing
-- `sample.parquet` - Example Parquet file for testing
-
-### Manual Testing
-1. Start the MCP server
-2. Connect through Claude for Desktop
-3. Test each tool with sample data files
-4. Verify error handling with invalid inputs
+- **`summarize_csv_file(filename)`**: Returns row and column count for CSV files
+- **`summarize_parquet_file(filename)`**: Returns row and column count for Parquet files
 
 ## Troubleshooting
 
 ### Common Issues
 
-- **File not found**: Ensure file paths are absolute and accessible
-- **Permission errors**: Check file read permissions
-- **Data format errors**: Verify file format matches the tool used
-- **Connection issues**: Confirm MCP server is running and accessible
+**Server won't start:**
+- Ensure all dependencies are installed: `uv sync`
+- Check that you're in the correct directory
+- Verify Python version compatibility (3.13+)
 
-### Debug Mode
-Run the server with debug logging:
-```bash
-python main.py --debug
+**Claude can't connect (spawn uv ENOENT):**
+- Use Method 2 or 3 above with full paths
+- Verify the absolute path in your config JSON is correct
+- Ensure `uv` is in your system PATH or use full path
+- Restart Claude for Desktop after config changes
+- Check that data files exist in the `/data` directory
+
+**Tools not appearing:**
+- Confirm the server is running without errors
+- Check the Claude UI for tool indicators (hammer icon)
+- Verify tool registration in `main.py`
+- Check server logs for any error messages
+
+**Permission errors:**
+- Make sure run scripts are executable: `chmod +x run_server.py run_server.sh`
+- Check file read permissions for data files
+
+## Development
+
+### Adding New Tools
+
+1. Create a new file in `tools/`
+2. Import the server instance: `from server import mcp`
+3. Define your tool with the `@mcp.tool()` decorator
+4. Import your new tool module in `main.py`
+
+Example:
+```python
+from server import mcp
+
+@mcp.tool()
+def my_new_tool(filename: str) -> str:
+    """Description of what this tool does."""
+    # Your tool implementation here
+    return "Tool result"
 ```
+
+### Extending Utilities
+
+Add new functions to `utils/file_reader.py` or create new utility modules as needed.
+
+### Project Structure Guidelines
+
+- Keep tools in the `tools/` directory
+- Place shared utilities in `utils/`
+- Add sample data to `data/`
+- Update `pyproject.toml` for new dependencies
+- Run `uv sync` after dependency changes
+
+## Dependencies
+
+- **mcp[cli]** (>=1.12.2): Official MCP SDK and CLI tools
+- **pandas** (>=2.3.1): Data manipulation and analysis
+- **pyarrow** (>=21.0.0): Parquet file support
+
+## License
+
+MIT License - feel free to use this as a template for your own MCP servers.
 
 ## Contributing
 
 1. Fork the repository
-2. Create a feature branch
-3. Implement your changes with tests
-4. Update documentation as needed
-5. Submit a pull request
-
-## License
-
-[Add your license information here]
+2. Create a feature branch: `git checkout -b feature/your-feature`
+3. Make your changes and test thoroughly
+4. Commit with descriptive messages: `git commit -m "feat: add new tool"`
+5. Push to your fork: `git push origin feature/your-feature`
+6. Create a pull request
 
 ## Changelog
 
 ### v0.1.0 (Current)
-- Initial MCP server setup
-- Basic project structure
-- CSV and Parquet reading tools (planned)
-- Claude for Desktop integration support
+- Initial MCP server implementation
+- CSV and Parquet file summarization tools
+- Claude Desktop integration with multiple run options
+- Sample data files and utilities
+- Comprehensive troubleshooting guide
